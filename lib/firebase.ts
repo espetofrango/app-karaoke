@@ -28,3 +28,5 @@ export interface YouTubeSearchResult {
   thumbnail: string
   channelTitle: string
 }
+
+// Force redeploy on Vercel - 2026-04-17
