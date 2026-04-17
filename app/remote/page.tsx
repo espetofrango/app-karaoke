@@ -72,19 +72,31 @@ export default function RemotePage() {
   const addToQueue = async (video: YouTubeSearchResult) => {
     setAddingId(video.id)
 
-    const { error } = await supabase.from('fila').insert({
+    const payload = {
       youtube_id: video.id,
       musica: video.title,
       nome: userName,
       status: 'pendente',
-    })
-
-    if (!error) {
-      setAddedIds((prev) => new Set(prev).add(video.id))
-      fetchQueue()
     }
+    
+    console.log('Dados sendo enviados:', payload)
 
-    setAddingId(null)
+    try {
+      const { data, error } = await supabase.from('fila').insert(payload)
+
+      if (error) {
+        console.error('Erro retornado pelo Supabase:', error)
+        alert('Erro no Supabase: ' + error.message + ' | Detalhes: ' + JSON.stringify(error))
+      } else {
+        setAddedIds((prev) => new Set(prev).add(video.id))
+        fetchQueue()
+      }
+    } catch (err: any) {
+      console.error('Exceção ao inserir no Supabase:', err)
+      alert('Exceção capturada: ' + err.message)
+    } finally {
+      setAddingId(null)
+    }
   }
 
   const handleNameSubmit = (e: React.FormEvent) => {
