@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { Search, Plus, Mic2, Check, Loader2, User } from 'lucide-react'
-import { supabase, type QueueItem, type YouTubeSearchResult } from '@/lib/supabase'
+import { supabase, type QueueItem, type YouTubeSearchResult, supabaseUrl } from '@/lib/supabase'
 import { searchYouTube } from '@/lib/youtube'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -86,7 +86,7 @@ export default function RemotePage() {
 
       if (error) {
         console.error('Erro retornado pelo Supabase:', error)
-        alert('Erro no Supabase: ' + error.message + ' | Detalhes: ' + JSON.stringify(error))
+        alert('Conectando em: ' + supabaseUrl + '\nErro no Supabase: ' + error.message + ' | Detalhes: ' + JSON.stringify(error))
       } else {
         setAddedIds((prev) => new Set(prev).add(video.id))
         fetchQueue()
