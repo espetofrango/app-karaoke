@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { QRCodeSVG } from 'qrcode.react'
-import { Music, Users, Mic2 } from 'lucide-react'
+import { Music, Users, Mic2, Play, Pause } from 'lucide-react'
 import { db, type QueueItem } from '@/lib/firebase'
 import { ref, onValue, update } from 'firebase/database'
 
@@ -110,17 +110,24 @@ export default function TVPage() {
                   },
                 }}
               />
-              {!isPlaying && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                  <button
-                    onClick={() => setIsPlaying(true)}
-                    className="bg-neon-pink hover:bg-neon-pink/80 text-white px-8 py-4 rounded-lg font-semibold text-lg flex items-center gap-2"
-                  >
-                    <Music className="w-6 h-6" />
-                    Iniciar Música
-                  </button>
-                </div>
-              )}
+              <div className="absolute bottom-4 left-4 right-4 flex justify-center">
+                <button
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  className="bg-neon-pink hover:bg-neon-pink/80 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 shadow-lg"
+                >
+                  {isPlaying ? (
+                    <>
+                      <Pause className="w-5 h-5" />
+                      Pausar
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-5 h-5" />
+                      Reproduzir
+                    </>
+                  )}
+                </button>
+              </div>
             </>
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-6">
