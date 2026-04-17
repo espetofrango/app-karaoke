@@ -94,21 +94,34 @@ export default function TVPage() {
         {/* Video Player */}
         <div className="flex-1 relative bg-black">
           {currentVideo ? (
-            <ReactPlayer
-              url={`https://www.youtube.com/watch?v=${currentVideo.youtube_id}`}
-              playing={isPlaying}
-              controls
-              width="100%"
-              height="100%"
-              onEnded={handleVideoEnd}
-              onError={handleVideoEnd}
-              config={{
-                playerVars: {
-                  autoplay: 1,
-                  modestbranding: 1,
-                },
-              }}
-            />
+            <>
+              <ReactPlayer
+                url={`https://www.youtube.com/watch?v=${currentVideo.youtube_id}`}
+                playing={isPlaying}
+                controls
+                width="100%"
+                height="100%"
+                onEnded={handleVideoEnd}
+                onError={handleVideoEnd}
+                config={{
+                  playerVars: {
+                    autoplay: 1,
+                    modestbranding: 1,
+                  },
+                }}
+              />
+              {!isPlaying && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                  <button
+                    onClick={() => setIsPlaying(true)}
+                    className="bg-neon-pink hover:bg-neon-pink/80 text-white px-8 py-4 rounded-lg font-semibold text-lg flex items-center gap-2"
+                  >
+                    <Music className="w-6 h-6" />
+                    Iniciar Música
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-6">
               <div className="relative">
