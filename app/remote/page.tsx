@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { Search, Plus, Mic2, Check, Loader2, User } from 'lucide-react'
+import { Search, Plus, Mic2, Check, Loader2, User, X } from 'lucide-react'
 import { db, type QueueItem, type YouTubeSearchResult } from '@/lib/firebase'
-import { ref, push, onValue } from 'firebase/database'
+import { ref, push, onValue, update } from 'firebase/database'
 import { searchYouTube } from '@/lib/youtube'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -86,6 +86,22 @@ export default function RemotePage() {
       alert('Erro no Firebase: ' + err.message)
     } finally {
       setAddingId(null)
+    }
+  }
+
+  const removeFromQueue = async (itemId: string, videoId: string) => {
+    try {
+      const itemRef = ref(db, `fila/${itemId}`)
+      await update(itemRef, { status: 'removido' })
+
+      setAddedIds((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(videoId)
+        return newSet
+      })
+    } catch (err: any) {
+      console.error('Erro ao remover da fila:', err)
+      alert('Erro ao remover: ' + err.message)
     }
   }
 
@@ -244,6 +260,48 @@ export default function RemotePage() {
                   </li>
                 )
               })}
+            </ul>
+          </div>
+        )}
+
+        {/* Current Queue */}
+        {queue.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
+              Sua fila ({queue.length})
+            </h2>
+            <ul className="space-y-2">
+              {queue.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-karaoke-darker border border-neon-cyan/10"
+                >
+                  <div className="relative flex-shrink-0 w-16 h-12 rounded overflow-hidden">
+                    <Image
+                      src={`https://img.youtube.com/vi/${item.youtube_id}/default.jpg`}
+                      alt={item.musica}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white font-medium line-clamp-2">
+                      {item.musica}
+                    </p>
+                    <p className="text-xs text-neon-cyan">
+                      {item.nome}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => removeFromQueue(item.id, item.youtube_id)}
+                    className="flex-shrink-0 border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </li>
+              ))}
             </ul>
           </div>
         )}
