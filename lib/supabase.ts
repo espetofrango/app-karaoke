@@ -7,13 +7,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export interface QueueItem {
   id: string
-  video_id: string
-  video_title: string
-  video_thumbnail: string
-  channel_name: string
-  requested_by: string
+  youtube_id: string
+  musica: string
+  nome: string
+  status: string
   created_at: string
-  played: boolean
 }
 
 export interface YouTubeSearchResult {

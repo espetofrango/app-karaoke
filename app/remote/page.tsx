@@ -20,9 +20,9 @@ export default function RemotePage() {
 
   const fetchQueue = useCallback(async () => {
     const { data } = await supabase
-      .from('queue')
+      .from('fila')
       .select('*')
-      .eq('played', false)
+      .eq('status', 'pendente')
       .order('created_at', { ascending: true })
 
     if (data) {
@@ -37,7 +37,7 @@ export default function RemotePage() {
       .channel('remote-queue-changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'queue' },
+        { event: '*', schema: 'public', table: 'fila' },
         () => {
           fetchQueue()
         }
@@ -72,13 +72,11 @@ export default function RemotePage() {
   const addToQueue = async (video: YouTubeSearchResult) => {
     setAddingId(video.id)
 
-    const { error } = await supabase.from('queue').insert({
-      video_id: video.id,
-      video_title: video.title,
-      video_thumbnail: video.thumbnail,
-      channel_name: video.channelTitle,
-      requested_by: userName,
-      played: false,
+    const { error } = await supabase.from('fila').insert({
+      youtube_id: video.id,
+      musica: video.title,
+      nome: userName,
+      status: 'pendente',
     })
 
     if (!error) {

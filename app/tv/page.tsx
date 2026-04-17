@@ -23,9 +23,9 @@ export default function TVPage() {
 
   const fetchQueue = useCallback(async () => {
     const { data, error } = await supabase
-      .from('queue')
+      .from('fila')
       .select('*')
-      .eq('played', false)
+      .eq('status', 'pendente')
       .order('created_at', { ascending: true })
 
     if (!error && data) {
@@ -50,7 +50,7 @@ export default function TVPage() {
       .channel('queue-changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'queue' },
+        { event: '*', schema: 'public', table: 'fila' },
         () => {
           fetchQueue()
         }
@@ -65,8 +65,8 @@ export default function TVPage() {
   const handleVideoEnd = async () => {
     if (currentVideo) {
       await supabase
-        .from('queue')
-        .update({ played: true })
+        .from('fila')
+        .update({ status: 'concluido' })
         .eq('id', currentVideo.id)
 
       const remainingQueue = queue.filter((item) => item.id !== currentVideo.id)
@@ -100,7 +100,7 @@ export default function TVPage() {
           {currentVideo && (
             <div className="flex items-center gap-2 text-neon-cyan">
               <Users className="w-5 h-5" />
-              <span className="text-sm">{currentVideo.requested_by}</span>
+              <span className="text-sm">{currentVideo.nome}</span>
             </div>
           )}
         </header>
@@ -109,7 +109,7 @@ export default function TVPage() {
         <div className="flex-1 relative bg-black">
           {currentVideo ? (
             <ReactPlayer
-              url={`https://www.youtube.com/watch?v=${currentVideo.video_id}`}
+              url={`https://www.youtube.com/watch?v=${currentVideo.youtube_id}`}
               playing={isPlaying}
               controls
               width="100%"
@@ -148,7 +148,7 @@ export default function TVPage() {
               <div className="w-2 h-2 rounded-full bg-neon-pink animate-pulse" />
               <span className="text-gray-400 text-sm">Tocando agora:</span>
               <span className="text-white font-medium truncate flex-1">
-                {currentVideo.video_title}
+                {currentVideo.musica}
               </span>
             </div>
           </div>
@@ -210,10 +210,10 @@ export default function TVPage() {
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-white font-medium truncate">
-                          {item.video_title}
+                          {item.musica}
                         </p>
                         <p className="text-xs text-neon-cyan mt-1">
-                          {item.requested_by}
+                          {item.nome}
                         </p>
                       </div>
                     </div>
