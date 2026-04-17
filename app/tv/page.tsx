@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { QRCodeSVG } from 'qrcode.react'
 import { Music, Users, Mic2 } from 'lucide-react'
 import { db, type QueueItem } from '@/lib/firebase'
-import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore'
+import { ref, onValue, update } from 'firebase/database'
 
 const ReactPlayer = dynamic(() => import('react-player'), {
   ssr: false,
@@ -23,42 +23,47 @@ export default function TVPage() {
   const remoteUrl = 'https://app-karaoke-weld.vercel.app/remote'
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'fila'),
-      where('status', '==', 'pendente'),
-      orderBy('created_at', 'asc')
-    )
+    const filaRef = ref(db, 'fila')
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const items: QueueItem[] = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-      })) as QueueItem[]
+    const unsubscribe = onValue(filaRef, (snapshot) => {
+      const data = snapshot.val()
+      if (!data) {
+        setQueue([])
+        return
+      }
+
+      const items: QueueItem[] = Object.entries(data)
+        .map(([key, value]: [string, any]) => ({
+          id: key,
+          youtube_id: value.youtube_id,
+          musica: value.musica,
+          nome: value.nome,
+          status: value.status,
+          created_at: value.created_at,
+        }))
+        .filter((item) => item.status === 'pendente')
+        .sort((a, b) => a.created_at - b.created_at)
 
       setQueue(items)
-
-      // Se não tem vídeo tocando e chegou algo na fila, toca o primeiro
-      if (items.length > 0) {
-        setCurrentVideo((prev) => {
-          if (!prev) {
-            setIsPlaying(true)
-            return items[0]
-          }
-          return prev
-        })
-      }
     })
 
     return () => unsubscribe()
   }, [])
 
+  // Quando a fila muda e não tem vídeo tocando, toca o primeiro
+  useEffect(() => {
+    if (!currentVideo && queue.length > 0) {
+      setCurrentVideo(queue[0])
+      setIsPlaying(true)
+    }
+  }, [queue, currentVideo])
+
   const handleVideoEnd = async () => {
     if (currentVideo) {
-      // Marca como concluído no Firestore
-      const docRef = doc(db, 'fila', currentVideo.id)
-      await updateDoc(docRef, { status: 'concluido' })
+      // Marca como concluído no Realtime Database
+      const itemRef = ref(db, `fila/${currentVideo.id}`)
+      await update(itemRef, { status: 'concluido' })
 
-      // O onSnapshot vai automaticamente remover da lista e acionar o próximo
       setCurrentVideo(null)
       setIsPlaying(false)
     }

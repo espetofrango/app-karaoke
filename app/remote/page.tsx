@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Search, Plus, Mic2, Check, Loader2, User } from 'lucide-react'
 import { db, type QueueItem, type YouTubeSearchResult } from '@/lib/firebase'
-import { collection, addDoc, query, where, orderBy, onSnapshot } from 'firebase/firestore'
+import { ref, push, onValue } from 'firebase/database'
 import { searchYouTube } from '@/lib/youtube'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,17 +20,27 @@ export default function RemotePage() {
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'fila'),
-      where('status', '==', 'pendente'),
-      orderBy('created_at', 'asc')
-    )
+    const filaRef = ref(db, 'fila')
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const items: QueueItem[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as QueueItem[]
+    const unsubscribe = onValue(filaRef, (snapshot) => {
+      const data = snapshot.val()
+      if (!data) {
+        setQueue([])
+        return
+      }
+
+      const items: QueueItem[] = Object.entries(data)
+        .map(([key, value]: [string, any]) => ({
+          id: key,
+          youtube_id: value.youtube_id,
+          musica: value.musica,
+          nome: value.nome,
+          status: value.status,
+          created_at: value.created_at,
+        }))
+        .filter((item) => item.status === 'pendente')
+        .sort((a, b) => a.created_at - b.created_at)
+
       setQueue(items)
     })
 
@@ -61,7 +71,8 @@ export default function RemotePage() {
     setAddingId(video.id)
 
     try {
-      await addDoc(collection(db, 'fila'), {
+      const filaRef = ref(db, 'fila')
+      await push(filaRef, {
         youtube_id: video.id,
         musica: video.title,
         nome: userName,
