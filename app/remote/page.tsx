@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { Search, Plus, Mic2, Check, Loader2, User } from 'lucide-react'
-import { supabase, type QueueItem, type YouTubeSearchResult, supabaseUrl } from '@/lib/supabase'
+import { db, type QueueItem, type YouTubeSearchResult } from '@/lib/firebase'
+import { collection, addDoc, query, where, orderBy, onSnapshot } from 'firebase/firestore'
 import { searchYouTube } from '@/lib/youtube'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,36 +19,23 @@ export default function RemotePage() {
   const [addingId, setAddingId] = useState<string | null>(null)
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set())
 
-  const fetchQueue = useCallback(async () => {
-    const { data } = await supabase
-      .from('fila')
-      .select('*')
-      .eq('status', 'pendente')
-      .order('created_at', { ascending: true })
-
-    if (data) {
-      setQueue(data)
-    }
-  }, [])
-
   useEffect(() => {
-    fetchQueue()
+    const q = query(
+      collection(db, 'fila'),
+      where('status', '==', 'pendente'),
+      orderBy('created_at', 'asc')
+    )
 
-    const channel = supabase
-      .channel('remote-queue-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'fila' },
-        () => {
-          fetchQueue()
-        }
-      )
-      .subscribe()
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items: QueueItem[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as QueueItem[]
+      setQueue(items)
+    })
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [fetchQueue])
+    return () => unsubscribe()
+  }, [])
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
@@ -72,28 +60,19 @@ export default function RemotePage() {
   const addToQueue = async (video: YouTubeSearchResult) => {
     setAddingId(video.id)
 
-    const payload = {
-      youtube_id: video.id,
-      musica: video.title,
-      nome: userName,
-      status: 'pendente',
-    }
-    
-    console.log('Dados sendo enviados:', payload)
-
     try {
-      const { data, error } = await supabase.from('fila').insert(payload)
+      await addDoc(collection(db, 'fila'), {
+        youtube_id: video.id,
+        musica: video.title,
+        nome: userName,
+        status: 'pendente',
+        created_at: Date.now(),
+      })
 
-      if (error) {
-        console.error('Erro retornado pelo Supabase:', error)
-        alert('Conectando em: ' + supabaseUrl + '\nErro no Supabase: ' + error.message + ' | Detalhes: ' + JSON.stringify(error))
-      } else {
-        setAddedIds((prev) => new Set(prev).add(video.id))
-        fetchQueue()
-      }
+      setAddedIds((prev) => new Set(prev).add(video.id))
     } catch (err: any) {
-      console.error('Exceção ao inserir no Supabase:', err)
-      alert('Exceção capturada: ' + err.message)
+      console.error('Erro ao inserir no Firebase:', err)
+      alert('Erro no Firebase: ' + err.message)
     } finally {
       setAddingId(null)
     }

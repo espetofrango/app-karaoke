@@ -1,4 +1,4 @@
-import type { YouTubeSearchResult } from './supabase'
+import type { YouTubeSearchResult } from './firebase'
 
 const YOUTUBE_API_KEY = 'AIzaSyDMqg24zb62YW2jdNPmC_b3qpxZg0ZJq6M'
 

@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { QRCodeSVG } from 'qrcode.react'
 import { Music, Users, Mic2 } from 'lucide-react'
-import { supabase, type QueueItem } from '@/lib/supabase'
+import { db, type QueueItem } from '@/lib/firebase'
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore'
 
 const ReactPlayer = dynamic(() => import('react-player'), {
   ssr: false,
@@ -19,63 +20,47 @@ export default function TVPage() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [currentVideo, setCurrentVideo] = useState<QueueItem | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [remoteUrl, setRemoteUrl] = useState('https://app-karaoke-weld.vercel.app/remote')
-
-  const fetchQueue = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('fila')
-      .select('*')
-      .eq('status', 'pendente')
-      .order('created_at', { ascending: true })
-
-    if (!error && data) {
-      setQueue(data)
-      if (!currentVideo && data.length > 0) {
-        setCurrentVideo(data[0])
-        setIsPlaying(true)
-      }
-    }
-  }, [currentVideo])
-
-
+  const remoteUrl = 'https://app-karaoke-weld.vercel.app/remote'
 
   useEffect(() => {
-    fetchQueue()
+    const q = query(
+      collection(db, 'fila'),
+      where('status', '==', 'pendente'),
+      orderBy('created_at', 'asc')
+    )
 
-    const channel = supabase
-      .channel('queue-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'fila' },
-        () => {
-          fetchQueue()
-        }
-      )
-      .subscribe()
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items: QueueItem[] = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      })) as QueueItem[]
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [fetchQueue])
+      setQueue(items)
+
+      // Se não tem vídeo tocando e chegou algo na fila, toca o primeiro
+      if (items.length > 0) {
+        setCurrentVideo((prev) => {
+          if (!prev) {
+            setIsPlaying(true)
+            return items[0]
+          }
+          return prev
+        })
+      }
+    })
+
+    return () => unsubscribe()
+  }, [])
 
   const handleVideoEnd = async () => {
     if (currentVideo) {
-      await supabase
-        .from('fila')
-        .update({ status: 'concluido' })
-        .eq('id', currentVideo.id)
+      // Marca como concluído no Firestore
+      const docRef = doc(db, 'fila', currentVideo.id)
+      await updateDoc(docRef, { status: 'concluido' })
 
-      const remainingQueue = queue.filter((item) => item.id !== currentVideo.id)
-
-      if (remainingQueue.length > 0) {
-        setCurrentVideo(remainingQueue[0])
-        setQueue(remainingQueue)
-        setIsPlaying(true)
-      } else {
-        setCurrentVideo(null)
-        setQueue([])
-        setIsPlaying(false)
-      }
+      // O onSnapshot vai automaticamente remover da lista e acionar o próximo
+      setCurrentVideo(null)
+      setIsPlaying(false)
     }
   }
 
@@ -160,15 +145,13 @@ export default function TVPage() {
           </h3>
           <div className="flex flex-col items-center gap-4">
             <div className="p-3 bg-white rounded-lg shadow-neon-pink">
-              {remoteUrl && (
-                <QRCodeSVG
-                  value={remoteUrl}
-                  size={140}
-                  bgColor="#ffffff"
-                  fgColor="#0f0f0f"
-                  level="H"
-                />
-              )}
+              <QRCodeSVG
+                value={remoteUrl}
+                size={140}
+                bgColor="#ffffff"
+                fgColor="#0f0f0f"
+                level="H"
+              />
             </div>
             <p className="text-xs text-gray-500 text-center">
               Escaneie para pedir sua musica
