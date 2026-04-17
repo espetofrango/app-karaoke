@@ -19,7 +19,7 @@ export default function TVPage() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [currentVideo, setCurrentVideo] = useState<QueueItem | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [remoteUrl, setRemoteUrl] = useState('')
+  const [remoteUrl, setRemoteUrl] = useState('https://app-karaoke-weld.vercel.app/remote')
 
   const fetchQueue = useCallback(async () => {
     const { data, error } = await supabase
@@ -37,11 +37,7 @@ export default function TVPage() {
     }
   }, [currentVideo])
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setRemoteUrl(`${window.location.origin}/remote`)
-    }
-  }, [])
+
 
   useEffect(() => {
     fetchQueue()
