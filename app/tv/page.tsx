@@ -53,6 +53,7 @@ export default function TVPage() {
   // Quando a fila muda e não tem vídeo tocando, toca o primeiro
   useEffect(() => {
     if (!currentVideo && queue.length > 0) {
+      console.log('Setting current video:', queue[0])
       setCurrentVideo(queue[0])
       setIsPlaying(true)
     }
@@ -101,18 +102,32 @@ export default function TVPage() {
                 controls
                 width="100%"
                 height="100%"
+                onReady={() => console.log('Player ready')}
+                onStart={() => console.log('Video started')}
+                onPlay={() => console.log('Video playing')}
+                onPause={() => console.log('Video paused')}
                 onEnded={handleVideoEnd}
-                onError={handleVideoEnd}
+                onError={(error) => {
+                  console.error('Player error:', error)
+                  handleVideoEnd()
+                }}
                 config={{
-                  playerVars: {
-                    autoplay: 1,
-                    modestbranding: 1,
+                  youtube: {
+                    playerVars: {
+                      autoplay: 0,
+                      modestbranding: 1,
+                      rel: 0,
+                      showinfo: 0,
+                    },
                   },
                 }}
               />
               <div className="absolute bottom-4 left-4 right-4 flex justify-center">
                 <button
-                  onClick={() => setIsPlaying(!isPlaying)}
+                  onClick={() => {
+                    console.log('Button clicked, current isPlaying:', isPlaying)
+                    setIsPlaying(!isPlaying)
+                  }}
                   className="bg-neon-pink hover:bg-neon-pink/80 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 shadow-lg"
                 >
                   {isPlaying ? (
