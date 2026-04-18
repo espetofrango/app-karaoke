@@ -117,10 +117,9 @@ export default function RemotePage() {
       <div className="min-h-screen bg-karaoke-dark flex flex-col items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <div className="relative inline-block mb-4">
-              <Mic2 className="w-16 h-16 text-neon-pink" />
-              <div className="absolute inset-0 blur-xl bg-neon-pink/30 rounded-full" />
-            </div>
+          <div className="relative mb-6 mx-auto w-24 h-24 rounded-full overflow-hidden border-2 border-neon-pink/30 shadow-[0_0_20px_rgba(255,42,133,0.4)]">
+            <img src="/logo.jpg" alt="Pulando Demais" className="w-full h-full object-cover" />
+          </div>
             <h1 className="text-2xl font-bold text-white mb-2">
               <span className="text-neon-pink">Karaoke</span> Pro
             </h1>
@@ -157,7 +156,7 @@ export default function RemotePage() {
       <header className="sticky top-0 z-10 bg-karaoke-darker border-b border-neon-pink/20 px-4 py-3">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Mic2 className="w-6 h-6 text-neon-pink" />
+            <img src="/logo.jpg" alt="Pulando Demais" className="w-8 h-8 rounded-full border border-neon-pink/50 shadow-[0_0_10px_rgba(255,42,133,0.3)] object-cover" />
             <h1 className="text-lg font-bold text-white">
               <span className="text-neon-pink">Karaoke</span> Pro
             </h1>

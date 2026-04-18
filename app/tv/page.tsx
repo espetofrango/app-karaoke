@@ -66,9 +66,8 @@ export default function TVPage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-neon-pink/20 rounded-full blur-[100px] pointer-events-none" />
         
         <div className="relative z-10 flex flex-col items-center max-w-md w-full p-8 bg-karaoke-darker/80 backdrop-blur-xl border border-neon-pink/30 rounded-2xl shadow-2xl shadow-neon-pink/20 text-center">
-          <div className="relative mb-6">
-            <Mic2 className="w-20 h-20 text-neon-pink animate-pulse" />
-            <div className="absolute inset-0 bg-neon-pink/40 blur-2xl rounded-full" />
+          <div className="relative mb-6 w-32 h-32 rounded-full overflow-hidden border-4 border-neon-pink/30 shadow-2xl shadow-neon-pink/20">
+            <img src="/logo.jpg" alt="Pulando Demais" className="w-full h-full object-cover" />
           </div>
           
           <h1 className="text-4xl font-extrabold text-white mb-2 tracking-tight">
@@ -100,7 +99,7 @@ export default function TVPage() {
         {/* Header */}
         <header className="flex items-center justify-between px-6 py-4 bg-karaoke-darker border-b border-neon-pink/20">
           <div className="flex items-center gap-3">
-            <Mic2 className="w-8 h-8 text-neon-pink" />
+            <img src="/logo.jpg" alt="Pulando Demais" className="w-10 h-10 rounded-full border border-neon-pink/50 shadow-[0_0_10px_rgba(255,42,133,0.3)] object-cover" />
             <h1 className="text-2xl font-bold text-white">
               <span className="text-neon-pink">Karaoke</span> Pro
             </h1>
