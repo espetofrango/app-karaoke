@@ -20,6 +20,7 @@ export default function TVPage() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [currentVideo, setCurrentVideo] = useState<QueueItem | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [hasInteracted, setHasInteracted] = useState(false)
   const remoteUrl = 'https://app-karaoke-weld.vercel.app/remote'
 
   useEffect(() => {
@@ -71,6 +72,40 @@ export default function TVPage() {
   }
 
   const upcomingQueue = queue.filter((item) => item.id !== currentVideo?.id)
+
+  if (!hasInteracted) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-karaoke-dark relative overflow-hidden">
+        {/* Background Effects */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-neon-pink/20 rounded-full blur-[100px] pointer-events-none" />
+        
+        <div className="relative z-10 flex flex-col items-center max-w-md w-full p-8 bg-karaoke-darker/80 backdrop-blur-xl border border-neon-pink/30 rounded-2xl shadow-2xl shadow-neon-pink/20 text-center">
+          <div className="relative mb-6">
+            <Mic2 className="w-20 h-20 text-neon-pink animate-pulse" />
+            <div className="absolute inset-0 bg-neon-pink/40 blur-2xl rounded-full" />
+          </div>
+          
+          <h1 className="text-4xl font-extrabold text-white mb-2 tracking-tight">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-neon-pink to-purple-500">
+              Karaoke
+            </span> Pro
+          </h1>
+          
+          <p className="text-gray-400 mb-8 text-sm">
+            Para garantir que a música toque automaticamente com som, os navegadores modernos exigem que você interaja com a página antes.
+          </p>
+
+          <button
+            onClick={() => setHasInteracted(true)}
+            className="w-full py-4 bg-gradient-to-r from-neon-pink to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(255,42,133,0.4)] hover:shadow-[0_0_30px_rgba(255,42,133,0.6)] transition-all flex items-center justify-center gap-2 group"
+          >
+            <Play className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            LIGAR A TV
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-screen bg-karaoke-dark overflow-hidden">
