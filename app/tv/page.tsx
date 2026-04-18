@@ -7,7 +7,7 @@ import { Music, Users, Mic2, Play, Pause } from 'lucide-react'
 import { db, type QueueItem } from '@/lib/firebase'
 import { ref, onValue, update } from 'firebase/database'
 
-const ReactPlayer = dynamic(() => import('react-player'), {
+const ReactPlayer = dynamic(() => import('react-player/youtube'), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center w-full h-full bg-black">
