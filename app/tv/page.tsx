@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { QRCodeSVG } from 'qrcode.react'
 import { Music, Users, Mic2, Play, Pause } from 'lucide-react'
@@ -20,6 +20,7 @@ export default function TVPage() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [currentVideo, setCurrentVideo] = useState<QueueItem | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const playerRef = useRef<any>(null)
   const remoteUrl = 'https://app-karaoke-weld.vercel.app/remote'
 
   useEffect(() => {
@@ -97,15 +98,25 @@ export default function TVPage() {
           {currentVideo ? (
             <>
               <ReactPlayer
+                ref={playerRef}
                 url={`https://www.youtube.com/watch?v=${currentVideo.youtube_id}`}
                 playing={isPlaying}
                 controls
                 width="100%"
                 height="100%"
                 onReady={() => console.log('Player ready')}
-                onStart={() => console.log('Video started')}
-                onPlay={() => console.log('Video playing')}
-                onPause={() => console.log('Video paused')}
+                onStart={() => {
+                  console.log('Video started')
+                  setIsPlaying(true)
+                }}
+                onPlay={() => {
+                  console.log('Video playing')
+                  setIsPlaying(true)
+                }}
+                onPause={() => {
+                  console.log('Video paused')
+                  setIsPlaying(false)
+                }}
                 onEnded={handleVideoEnd}
                 onError={(error) => {
                   console.error('Player error:', error)
@@ -118,6 +129,8 @@ export default function TVPage() {
                       modestbranding: 1,
                       rel: 0,
                       showinfo: 0,
+                      disablekb: 1,
+                      fs: 0,
                     },
                   },
                 }}
@@ -126,7 +139,15 @@ export default function TVPage() {
                 <button
                   onClick={() => {
                     console.log('Button clicked, current isPlaying:', isPlaying)
-                    setIsPlaying(!isPlaying)
+                    if (playerRef.current) {
+                      if (isPlaying) {
+                        playerRef.current.getInternalPlayer().pauseVideo()
+                      } else {
+                        playerRef.current.getInternalPlayer().playVideo()
+                      }
+                    } else {
+                      setIsPlaying(!isPlaying)
+                    }
                   }}
                   className="bg-neon-pink hover:bg-neon-pink/80 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 shadow-lg"
                 >
