@@ -20,6 +20,7 @@ export default function TVPage() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [currentVideo, setCurrentVideo] = useState<QueueItem | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [hasUserInteracted, setHasUserInteracted] = useState(false)
   const remoteUrl = 'https://app-karaoke-weld.vercel.app/remote'
 
   useEffect(() => {
@@ -56,6 +57,7 @@ export default function TVPage() {
       console.log('Setting current video:', queue[0])
       setCurrentVideo(queue[0])
       setIsPlaying(false) // Não inicia automaticamente devido às restrições de autoplay
+      setHasUserInteracted(false) // Reset interaction state for new video
     }
   }, [queue, currentVideo])
 
@@ -98,7 +100,7 @@ export default function TVPage() {
             <>
               <ReactPlayer
                 url={`https://www.youtube.com/watch?v=${currentVideo.youtube_id}`}
-                playing={isPlaying}
+                playing={hasUserInteracted && isPlaying}
                 controls
                 width="100%"
                 height="100%"
@@ -126,7 +128,12 @@ export default function TVPage() {
                 <button
                   onClick={() => {
                     console.log('Button clicked, toggling playback')
-                    setIsPlaying(!isPlaying)
+                    if (!hasUserInteracted) {
+                      setHasUserInteracted(true)
+                      setIsPlaying(true)
+                    } else {
+                      setIsPlaying(!isPlaying)
+                    }
                   }}
                   className="bg-neon-pink hover:bg-neon-pink/80 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 shadow-lg"
                 >
@@ -138,7 +145,7 @@ export default function TVPage() {
                   ) : (
                     <>
                       <Play className="w-5 h-5" />
-                      Reproduzir
+                      {hasUserInteracted ? 'Continuar' : 'Reproduzir'}
                     </>
                   )}
                 </button>
@@ -162,7 +169,7 @@ export default function TVPage() {
           )}
 
           {/* Instruções para o usuário da TV */}
-          {currentVideo && (
+          {currentVideo && !hasUserInteracted && (
             <div className="absolute top-4 left-4 right-4 bg-black/80 text-white p-4 rounded-lg">
               <p className="text-sm text-center">
                 🎵 Música pronta! Clique no botão rosa "Reproduzir" para iniciar a apresentação
