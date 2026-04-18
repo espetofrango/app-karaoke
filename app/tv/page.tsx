@@ -19,7 +19,7 @@ const ReactPlayer = dynamic(() => import('react-player'), {
 export default function TVPage() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [currentVideo, setCurrentVideo] = useState<QueueItem | null>(null)
-  const [playerState, setPlayerState] = useState<'stopped' | 'playing' | 'paused'>('stopped')
+  const [isPlaying, setIsPlaying] = useState(false)
   const remoteUrl = 'https://app-karaoke-weld.vercel.app/remote'
 
   useEffect(() => {
@@ -50,12 +50,12 @@ export default function TVPage() {
     return () => unsubscribe()
   }, [])
 
-  // Quando a fila muda e não tem vídeo tocando, prepara o primeiro mas não inicia automaticamente
+  // Quando a fila muda e não tem vídeo tocando, toca o primeiro
   useEffect(() => {
     if (!currentVideo && queue.length > 0) {
-      console.log('Setting current video:', queue[0])
       setCurrentVideo(queue[0])
-      setPlayerState('stopped') // Começa parado
+      // Importante dar um pequeno delay para garantir que o player carregou antes de forçar o play
+      setTimeout(() => setIsPlaying(true), 500)
     }
   }, [queue, currentVideo])
 
@@ -95,70 +95,28 @@ export default function TVPage() {
         {/* Video Player */}
         <div className="flex-1 relative bg-black">
           {currentVideo ? (
-            <>
-              <ReactPlayer
-                url={`https://www.youtube.com/watch?v=${currentVideo.youtube_id}`}
-                playing={playerState === 'playing'}
-                controls
-                width="100%"
-                height="100%"
-                onPlay={() => {
-                  console.log('Player started playing')
-                  setPlayerState('playing')
-                }}
-                onPause={() => {
-                  console.log('Player paused')
-                  setPlayerState('paused')
-                }}
-                onEnded={handleVideoEnd}
-                onError={(error) => {
-                  console.error('Player error:', error)
-                  handleVideoEnd()
-                }}
-                config={{
-                  youtube: {
-                    playerVars: {
-                      autoplay: 0,
-                      modestbranding: 1,
-                      rel: 0,
-                      showinfo: 0,
-                      disablekb: 1,
-                      fs: 0,
-                    },
+            <ReactPlayer
+              url={`https://www.youtube.com/watch?v=${currentVideo.youtube_id}`}
+              playing={isPlaying}
+              controls
+              width="100%"
+              height="100%"
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onEnded={handleVideoEnd}
+              onError={(e) => {
+                console.error("Erro no video: ", e)
+                handleVideoEnd()
+              }}
+              config={{
+                youtube: {
+                  playerVars: {
+                    autoplay: 1, // força o autoplay pelo proprio iframe do youtube
+                    modestbranding: 1,
                   },
-                }}
-              />
-              <div className="absolute bottom-4 left-4 right-4 flex justify-center">
-                <button
-                  onClick={() => {
-                    console.log('Button clicked, current state:', playerState)
-                    if (playerState === 'stopped') {
-                      console.log('Starting playback')
-                      setPlayerState('playing')
-                    } else if (playerState === 'playing') {
-                      console.log('Pausing playback')
-                      setPlayerState('paused')
-                    } else if (playerState === 'paused') {
-                      console.log('Resuming playback')
-                      setPlayerState('playing')
-                    }
-                  }}
-                  className="bg-neon-pink hover:bg-neon-pink/80 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 shadow-lg"
-                >
-                  {playerState === 'playing' ? (
-                    <>
-                      <Pause className="w-5 h-5" />
-                      Pausar
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-5 h-5" />
-                      {playerState === 'stopped' ? 'Reproduzir' : 'Continuar'}
-                    </>
-                  )}
-                </button>
-              </div>
-            </>
+                },
+              }}
+            />
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-6">
               <div className="relative">
@@ -173,15 +131,6 @@ export default function TVPage() {
                   Escaneie o QR Code para adicionar uma musica
                 </p>
               </div>
-            </div>
-          )}
-
-          {/* Instruções para o usuário da TV */}
-          {currentVideo && playerState === 'stopped' && (
-            <div className="absolute top-4 left-4 right-4 bg-black/80 text-white p-4 rounded-lg">
-              <p className="text-sm text-center">
-                🎵 Música pronta! Clique no botão rosa "Reproduzir" para iniciar a apresentação
-              </p>
             </div>
           )}
         </div>
