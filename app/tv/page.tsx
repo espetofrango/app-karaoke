@@ -1,25 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import dynamic from 'next/dynamic'
 import { QRCodeSVG } from 'qrcode.react'
-import { Music, Users, Mic2, Play, Pause } from 'lucide-react'
+import { Music, Users, Mic2, Play } from 'lucide-react'
 import { db, type QueueItem } from '@/lib/firebase'
 import { ref, onValue, update } from 'firebase/database'
-
-const ReactPlayer = dynamic(() => import('react-player/youtube'), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center w-full h-full bg-black">
-      <div className="text-neon-pink animate-pulse">Carregando player...</div>
-    </div>
-  ),
-})
+import YouTube from 'react-youtube'
 
 export default function TVPage() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [currentVideo, setCurrentVideo] = useState<QueueItem | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
   const [hasInteracted, setHasInteracted] = useState(false)
   const remoteUrl = 'https://app-karaoke-weld.vercel.app/remote'
 
@@ -55,7 +45,6 @@ export default function TVPage() {
   useEffect(() => {
     if (!currentVideo && queue.length > 0) {
       setCurrentVideo(queue[0])
-      // A reprodução será ativada pelo onReady do ReactPlayer!
     }
   }, [queue, currentVideo])
 
@@ -64,9 +53,7 @@ export default function TVPage() {
       // Marca como concluído no Realtime Database
       const itemRef = ref(db, `fila/${currentVideo.id}`)
       await update(itemRef, { status: 'concluido' })
-
       setCurrentVideo(null)
-      setIsPlaying(false)
     }
   }
 
@@ -129,29 +116,31 @@ export default function TVPage() {
         {/* Video Player */}
         <div className="flex-1 relative bg-black">
           {currentVideo ? (
-            <ReactPlayer
-              url={`https://www.youtube.com/watch?v=${currentVideo.youtube_id}`}
-              playing={isPlaying}
-              controls
-              width="100%"
-              height="100%"
-              onReady={() => setIsPlaying(true)}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              onEnded={handleVideoEnd}
-              onError={(e) => {
-                console.error("Erro no video: ", e)
-                handleVideoEnd()
-              }}
-              config={{
-                youtube: {
+            <div className="absolute inset-0">
+              <YouTube
+                videoId={currentVideo.youtube_id}
+                opts={{
+                  width: '100%',
+                  height: '100%',
                   playerVars: {
-                    autoplay: 1, // força o autoplay pelo proprio iframe do youtube
+                    autoplay: 1, // força o autoplay
                     modestbranding: 1,
+                    rel: 0,
+                    showinfo: 0,
                   },
-                },
-              }}
-            />
+                }}
+                onReady={(e) => {
+                  e.target.playVideo()
+                }}
+                onEnd={handleVideoEnd}
+                onError={(e) => {
+                  console.error("Erro no video: ", e)
+                  handleVideoEnd() // Pula o vídeo se der erro
+                }}
+                className="w-full h-full"
+                iframeClassName="w-full h-full"
+              />
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-6">
               <div className="relative">
@@ -254,3 +243,4 @@ export default function TVPage() {
     </div>
   )
 }
+
