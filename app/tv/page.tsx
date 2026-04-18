@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { QRCodeSVG } from 'qrcode.react'
 import { Music, Users, Mic2, Play, Pause } from 'lucide-react'
@@ -20,7 +20,6 @@ export default function TVPage() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [currentVideo, setCurrentVideo] = useState<QueueItem | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
-  const playerRef = useRef<any>(null)
   const remoteUrl = 'https://app-karaoke-weld.vercel.app/remote'
 
   useEffect(() => {
@@ -51,12 +50,12 @@ export default function TVPage() {
     return () => unsubscribe()
   }, [])
 
-  // Quando a fila muda e não tem vídeo tocando, toca o primeiro
+  // Quando a fila muda e não tem vídeo tocando, prepara o primeiro mas não inicia automaticamente
   useEffect(() => {
     if (!currentVideo && queue.length > 0) {
       console.log('Setting current video:', queue[0])
       setCurrentVideo(queue[0])
-      setIsPlaying(true)
+      setIsPlaying(false) // Não inicia automaticamente devido às restrições de autoplay
     }
   }, [queue, currentVideo])
 
@@ -98,25 +97,13 @@ export default function TVPage() {
           {currentVideo ? (
             <>
               <ReactPlayer
-                ref={playerRef}
                 url={`https://www.youtube.com/watch?v=${currentVideo.youtube_id}`}
                 playing={isPlaying}
                 controls
                 width="100%"
                 height="100%"
-                onReady={() => console.log('Player ready')}
-                onStart={() => {
-                  console.log('Video started')
-                  setIsPlaying(true)
-                }}
-                onPlay={() => {
-                  console.log('Video playing')
-                  setIsPlaying(true)
-                }}
-                onPause={() => {
-                  console.log('Video paused')
-                  setIsPlaying(false)
-                }}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
                 onEnded={handleVideoEnd}
                 onError={(error) => {
                   console.error('Player error:', error)
@@ -138,16 +125,8 @@ export default function TVPage() {
               <div className="absolute bottom-4 left-4 right-4 flex justify-center">
                 <button
                   onClick={() => {
-                    console.log('Button clicked, current isPlaying:', isPlaying)
-                    if (playerRef.current) {
-                      if (isPlaying) {
-                        playerRef.current.getInternalPlayer().pauseVideo()
-                      } else {
-                        playerRef.current.getInternalPlayer().playVideo()
-                      }
-                    } else {
-                      setIsPlaying(!isPlaying)
-                    }
+                    console.log('Button clicked, toggling playback')
+                    setIsPlaying(!isPlaying)
                   }}
                   className="bg-neon-pink hover:bg-neon-pink/80 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 shadow-lg"
                 >
@@ -179,6 +158,15 @@ export default function TVPage() {
                   Escaneie o QR Code para adicionar uma musica
                 </p>
               </div>
+            </div>
+          )}
+
+          {/* Instruções para o usuário da TV */}
+          {currentVideo && (
+            <div className="absolute top-4 left-4 right-4 bg-black/80 text-white p-4 rounded-lg">
+              <p className="text-sm text-center">
+                🎵 Música pronta! Clique no botão rosa "Reproduzir" para iniciar a apresentação
+              </p>
             </div>
           )}
         </div>
