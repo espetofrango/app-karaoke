@@ -19,8 +19,7 @@ const ReactPlayer = dynamic(() => import('react-player'), {
 export default function TVPage() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [currentVideo, setCurrentVideo] = useState<QueueItem | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [hasUserInteracted, setHasUserInteracted] = useState(false)
+  const [playerState, setPlayerState] = useState<'stopped' | 'playing' | 'paused'>('stopped')
   const remoteUrl = 'https://app-karaoke-weld.vercel.app/remote'
 
   useEffect(() => {
@@ -56,8 +55,7 @@ export default function TVPage() {
     if (!currentVideo && queue.length > 0) {
       console.log('Setting current video:', queue[0])
       setCurrentVideo(queue[0])
-      setIsPlaying(false) // Não inicia automaticamente devido às restrições de autoplay
-      setHasUserInteracted(false) // Reset interaction state for new video
+      setPlayerState('stopped') // Começa parado
     }
   }, [queue, currentVideo])
 
@@ -100,12 +98,18 @@ export default function TVPage() {
             <>
               <ReactPlayer
                 url={`https://www.youtube.com/watch?v=${currentVideo.youtube_id}`}
-                playing={hasUserInteracted && isPlaying}
+                playing={playerState === 'playing'}
                 controls
                 width="100%"
                 height="100%"
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
+                onPlay={() => {
+                  console.log('Player started playing')
+                  setPlayerState('playing')
+                }}
+                onPause={() => {
+                  console.log('Player paused')
+                  setPlayerState('paused')
+                }}
                 onEnded={handleVideoEnd}
                 onError={(error) => {
                   console.error('Player error:', error)
@@ -127,17 +131,21 @@ export default function TVPage() {
               <div className="absolute bottom-4 left-4 right-4 flex justify-center">
                 <button
                   onClick={() => {
-                    console.log('Button clicked, toggling playback')
-                    if (!hasUserInteracted) {
-                      setHasUserInteracted(true)
-                      setIsPlaying(true)
-                    } else {
-                      setIsPlaying(!isPlaying)
+                    console.log('Button clicked, current state:', playerState)
+                    if (playerState === 'stopped') {
+                      console.log('Starting playback')
+                      setPlayerState('playing')
+                    } else if (playerState === 'playing') {
+                      console.log('Pausing playback')
+                      setPlayerState('paused')
+                    } else if (playerState === 'paused') {
+                      console.log('Resuming playback')
+                      setPlayerState('playing')
                     }
                   }}
                   className="bg-neon-pink hover:bg-neon-pink/80 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 shadow-lg"
                 >
-                  {isPlaying ? (
+                  {playerState === 'playing' ? (
                     <>
                       <Pause className="w-5 h-5" />
                       Pausar
@@ -145,7 +153,7 @@ export default function TVPage() {
                   ) : (
                     <>
                       <Play className="w-5 h-5" />
-                      {hasUserInteracted ? 'Continuar' : 'Reproduzir'}
+                      {playerState === 'stopped' ? 'Reproduzir' : 'Continuar'}
                     </>
                   )}
                 </button>
@@ -169,7 +177,7 @@ export default function TVPage() {
           )}
 
           {/* Instruções para o usuário da TV */}
-          {currentVideo && !hasUserInteracted && (
+          {currentVideo && playerState === 'stopped' && (
             <div className="absolute top-4 left-4 right-4 bg-black/80 text-white p-4 rounded-lg">
               <p className="text-sm text-center">
                 🎵 Música pronta! Clique no botão rosa "Reproduzir" para iniciar a apresentação
