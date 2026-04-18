@@ -51,12 +51,11 @@ export default function TVPage() {
     return () => unsubscribe()
   }, [])
 
-  // Quando a fila muda e não tem vídeo tocando, toca o primeiro
+  // Quando a fila muda e não tem vídeo tocando, seleciona o primeiro
   useEffect(() => {
     if (!currentVideo && queue.length > 0) {
       setCurrentVideo(queue[0])
-      // Importante dar um pequeno delay para garantir que o player carregou antes de forçar o play
-      setTimeout(() => setIsPlaying(true), 500)
+      // A reprodução será ativada pelo onReady do ReactPlayer!
     }
   }, [queue, currentVideo])
 
@@ -136,6 +135,7 @@ export default function TVPage() {
               controls
               width="100%"
               height="100%"
+              onReady={() => setIsPlaying(true)}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
               onEnded={handleVideoEnd}
